@@ -1,15 +1,13 @@
-mod hal;
-
-trait DeviceInfo {
+pub trait DeviceInfo {
     fn get_name(&self) -> &str;
 }
 
-trait Driver<I: DeviceInfo, D: Device> {
+pub trait Driver<I: DeviceInfo, D: Device> {
     async fn discover(&self) -> Vec<I>;
 
     async fn create(info: I) -> D;
 }
 
-trait Device {
+pub trait Device {
     async fn init(&self) -> Result<(), String>;
 }

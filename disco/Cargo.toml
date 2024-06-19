@@ -1,0 +1,12 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "disco"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = "4.5.7"
+driver = { path = "../driver" }
+hal = { path = "../hal" }
+async-std = "1.12.0"

@@ -1,0 +1,11 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "driver"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hal = { path = "../hal" }
+futures-util = "0.3.30"
+mdns = "3.0.0"

@@ -1,7 +1,10 @@
-[package]
-name = "domus"
-version = "0.1.0"
-edition = "2021"
+cargo-features = ["edition2024"]
 
-[dependencies]
-async-std = { version = "1.10.0", features = ["attributes"] }
+[workspace]
+resolver = "3"
+
+members = [
+    "hal",
+    "disco",
+    "driver"
+]
