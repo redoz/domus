@@ -52,108 +52,30 @@ macro_rules! define_space_field {
 
 
 macro_rules! define_space {
-    (
-        $field:ident,
-        $definition:tt
-    ) => {
+    ($name:ident, { $($inner:tt)* }) => {
         paste! {
-            // #[derive(Debug)]
-            #[allow(dead_code)]
-            struct [<$field:camel>] {
+            #[derive(Debug)]
+            struct [<$name:camel>] {
                 name: String,
-                //tags: Vec<String>,
-                // $definition
-                
-                define_space_field!($field, $definition);
-                
-                /*
-                $(
-                    $subfield: [<$subfield:camel>],
-                )*
-                $(
-                    $device_field: $device_driver,
-                )*
-                */
             }
 
-            impl Space for [<$field:camel>] {
+            impl Space for [<$name:camel>] {
                 fn name(&self) -> &str {
                     &self.name
                 }
-                // fn tags(&self) -> &[String] { &[] }
-                /*
-                fn sub_spaces(&self) -> Box<dyn Iterator<Item = &dyn Space> + '_> {
-                    static SUBSPACES: [
-                        $(
-                            &self.$subfield as &dyn Space,
-                        )*
-                    ];
-                    Box::new(
-                        [
-                            $(
-                                &self.$subfield as &dyn Space,
-                            )* 
-                        ].into_iter()
-                    )
-                }
-                 */
             }
-
-            // recursivly generate all types
-            /* 
-            $( 
-                define_subspace!($subfield, $subspace); 
-            )*
-            */
-
         }
     };
+    ($name:ident, $type:ident { $($props:tt)* }) => {
+        // Device definition, if needed
+    };
 }
- /*
-macro_rules! construct_subspace {
-    (
-        $field:ident,
-        {
-            name: $name:expr
-            // devices
-            $(, $device_field:ident: $device_driver:ty 
-                { 
-                    $($device_prop:ident: $device_value:expr),*
-                    $(,)?
-                }
-            )*
-            // sub-spaces
-            $(, @ $subfield:ident: $subspace:tt)*
-            // spare commas
-            $(,)?
-        }
-    ) => {
-        paste! {
-            [<$field:camel>] {
-                name: $name.to_string(),
-                $( $subfield: construct_subspace!($subfield, $subspace), )*
-                $(
-                    $device_field: $device_driver {
-                        $($device_prop: $device_value, )*
-                    },
-                )*
-            }
-        }
-        
-    }    
-} */
 
 macro_rules! domus {
     (
         name: $name:expr
-        $(, $field:ident: $subspace:tt)*
-
-/*
-        $(, $field:ident: {
-            $($subspace:tt)*
-        })*
-*/        
-        // allow for trailing comma
+        $(, $field:ident: { $($subspace:tt)* })*
+        $(, $device:ident: $device_type:ident { $($device_props:tt)* })*
         $(,)?
     ) => {
         paste! {
@@ -161,30 +83,24 @@ macro_rules! domus {
                 #[derive(Debug)]
                 struct Domus {
                     name: String,
-                    $(
-                        $field: [<$field:camel>],
-                    )*                
+                    $($field: [<$field:camel>],)*
+                    $($device: $device_type,)*
                 }
 
                 impl Space for Domus {
                     fn name(&self) -> &str {
                         &self.name
                     }
-                    //fn tags(&self) -> &[String] { &[] }
-                    //fn sub_spaces(&self) -> &[Box<dyn Space>] { &[] }
                 }
 
                 $(
-                    define_space!($field, $subspace);
+                    define_space!($field, { $($subspace)* });
                 )*
 
                 Domus {
                     name: $name.to_string(),
-                    /*
-                    $(
-                        $field: construct_subspace!($field, $subspace),
-                    )*
-                     */
+                    $($field: [<$field:camel>] { name: stringify!($field).to_string() },)*
+                    $($device: $device_type { $($device_props)* },)*
                 }
             }
         }
@@ -201,6 +117,9 @@ fn main() {
         name: "Apartment",
         entrance_hallway: {
             name: "Entrance Hallway"
+        },
+        sensoor: MySensor {
+            name: "yahoo"
         }
     };
 /*
