@@ -138,7 +138,9 @@ impl hal::Driver<AqaraFP2Discovery, AqaraFP2Device> for AqaraFP2Driver {
                         if let Some(txt) = txt {
                             println!("found cast device at {}, txt: {:?}", addr, txt);
                             discoveries.push(AqaraFP2Discovery { 
-                                name: addr.to_string() 
+                                name: addr.to_string() ,
+                                ip: addr,
+                                id: "abc".to_string()
                             });
                         }
                     } else {
