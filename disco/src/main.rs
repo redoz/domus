@@ -1,6 +1,6 @@
 use clap::{Arg, Command};
 use driver::AqaraFP2Driver; // Import the trait
-use hal::{Driver, DeviceInfo};
+use hal::{Driver, DiscoveryInfo};
 
 #[async_std::main]
 async fn main() {
@@ -35,7 +35,9 @@ async fn main() {
                 */
 
                 let fp2 = AqaraFP2Driver::new();
+                println!("AB");
                 let result = fp2.discover().await;
+                println!("CD");
                 for item in result {
                     println!("Discovered item: {:?}", item.get_name());
                 }

@@ -6,5 +6,6 @@ resolver = "3"
 members = [
     "hal",
     "disco",
-    "driver"
+    "driver",
+    "domus"
 ]
