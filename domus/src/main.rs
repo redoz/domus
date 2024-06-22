@@ -1,6 +1,9 @@
 #[macro_use]
 mod domus_macro;
+use paste::paste;
 
+use core::LifeCycle;
+use core::Space;
 
 
 
@@ -14,13 +17,15 @@ pub struct SubSpaceIterator<'a, S> {
  */
 
 use driver::AqaraFP2;
-use paste::paste;
+
 
 
 
 
 #[async_std::main]
 async fn main() {
+    env_logger::init();
+
     let apartment = domus! {
         name: "Apartment",
         office: Space {
@@ -32,7 +37,11 @@ async fn main() {
     };
 
     
-    apartment.init().await;
+    if let Err(error) = apartment.init().await {
+        log::error!("Error initializing: {:?}", error);
+    } else {
+        // do some kind of waiting for exit signal here
+    }
     
 /*
     let apartment = domus! {
@@ -169,7 +178,6 @@ async fn main() {
         },
     };
  */
-    println!("apartment: {:?}", apartment);
     
     
     /*

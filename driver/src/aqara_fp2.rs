@@ -1,7 +1,8 @@
 use std::{net::IpAddr, time::Duration};
-use hal::{Device, DiscoveryInfo};
+use hal::{DiscoveryInfo};
 use mdns::{Record, RecordKind};
 use core::LifeCycle;
+use core::Device;
 
 use futures_util::{pin_mut, stream::StreamExt};
 /* 
@@ -97,15 +98,15 @@ impl AqaraFP2Driver {
 impl LifeCycle for AqaraFP2 {
     async fn init(&self) -> Result<(), Box<dyn std::error::Error>> {
         // Implement initialization logic for AqaraFP2 device
-        println!("Initializing AqaraFP2 device: {}", self.name);
+        log::info!("Initializing AqaraFP2 device: {}", self.name);
         // Add actual initialization code here
         Ok(())
     }
 
-    async fn cleanup(&self) -> Result<(), Box<dyn std::error::Error>> {
-        // Implement initialization logic for AqaraFP2 device
-        println!("Initializing AqaraFP2 device: {}", self.name);
-        // Add actual initialization code here
+    async fn dispose(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Implement disposal logic for AqaraFP2 device
+        println!("Disposing AqaraFP2 device: {}", self.name);
+        // Add actual disposal code here
         Ok(())
     }
 }
@@ -177,5 +178,10 @@ impl hal::Driver<AqaraFP2Discovery, AqaraFP2> for AqaraFP2Driver {
 
     async fn create(_info: AqaraFP2Discovery) -> AqaraFP2 {
         todo!()
+    }
+
+    async fn pair(&self, _info: &AqaraFP2Discovery) -> Result<(), Box<dyn std::error::Error>> {
+        // Implement pairing logic here
+        Ok(())
     }
 }

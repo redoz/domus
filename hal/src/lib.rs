@@ -1,4 +1,4 @@
-use core::LifeCycle;
+use core::Device;
 
 
 pub trait DiscoveryInfo {
@@ -9,11 +9,8 @@ pub trait DiscoveryInfo {
 #[allow(async_fn_in_trait)]
 pub trait Driver<I: DiscoveryInfo, D: Device> {
     async fn discover(&self) -> Vec<I>;
-    async fn pair(&self, discovery: I) -> Result<(), Box<dyn std::error::Error>>;
+    async fn pair(&self, discovery: &I) -> Result<(), Box<dyn std::error::Error>>;
 
     async fn create(info: I) -> D;
 }
 
-pub trait Device : LifeCycle {
-
-}

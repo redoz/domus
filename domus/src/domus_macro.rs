@@ -1,4 +1,5 @@
 
+
 macro_rules! define_space_field_type {
     (
         $field_name:ident,
@@ -43,14 +44,14 @@ macro_rules! define_space {
 
             impl LifeCycle for [<$name:camel>] {
                 async fn init(&self) -> Result<(), Box<dyn std::error::Error>> {
-                    //$(init_space_member!($field_name);)*
-                    $(&self.$field_name.init().await?;)*
+                    log::info!("Initializing {}", self.name);
+                    $(let _ = &self.$field_name.init().await?;)*
                     Ok(())
                 }
-                
-                async fn cleanup(&self) -> Result<(), Box<dyn std::error::Error>> {
-                    //$(init_space_member!($field_name);)*
-                    $(&self.$field_name.cleanup().await?;)*
+
+                async fn dispose(&self) -> Result<(), Box<dyn std::error::Error>> {
+                    log::info!("Disposing {}", self.name);
+                    $(let _ = &self.$field_name.dispose().await?;)*
                     Ok(())
                 }
             }
@@ -90,14 +91,6 @@ macro_rules! init_space_field_value {
     };
 }
 
-macro_rules! init_space_member {
-    (
-        $name:ident
-    ) => {
-        $name.init().await?
-    };
-}
-
 macro_rules! domus {
     (
         name: $name:expr
@@ -117,8 +110,19 @@ macro_rules! domus {
                     fn name(&self) -> &str {
                         &self.name
                     }
+
+                }
+
+                impl LifeCycle for Domus {
                     async fn init(&self) -> Result<(), Box<dyn std::error::Error>> {
-                        $(init_space_member!($field_name);)*
+                        log::info!("Initializing {}", self.name);
+                        $(let _ = &self.$field_name.init().await?;)*
+                        Ok(())
+                    }
+
+                    async fn dispose(&self) -> Result<(), Box<dyn std::error::Error>> {
+                        log::info!("Disposing {}", self.name);
+                        $(let _ = &self.$field_name.dispose().await?;)*
                         Ok(())
                     }
                 }

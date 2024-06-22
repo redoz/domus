@@ -10,3 +10,4 @@ hal = { path = "../hal" }
 core = { path = "../core" }
 futures-util = "0.3.30"
 mdns = "3.0.0"
+log = "0.4.21"
