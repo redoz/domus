@@ -1,6 +1,8 @@
 use std::{net::IpAddr, time::Duration};
 use hal::{Device, DiscoveryInfo};
 use mdns::{Record, RecordKind};
+use core::LifeCycle;
+
 use futures_util::{pin_mut, stream::StreamExt};
 /* 
 enum Category {
@@ -81,7 +83,10 @@ impl DiscoveryInfo for AqaraFP2Discovery {
 
 pub struct AqaraFP2Driver {}
 
-pub struct AqaraFP2Device {}
+#[derive(Debug)]
+pub struct AqaraFP2 {
+    pub name: &'static str
+}
 
 impl AqaraFP2Driver {
     pub fn new() -> Self {
@@ -89,13 +94,26 @@ impl AqaraFP2Driver {
     }
 }
 
+impl LifeCycle for AqaraFP2 {
+    async fn init(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Implement initialization logic for AqaraFP2 device
+        println!("Initializing AqaraFP2 device: {}", self.name);
+        // Add actual initialization code here
+        Ok(())
+    }
 
-impl Device for AqaraFP2Device {
-    async fn init(&self) -> Result<(), String> {
-        // Implement the required methods for the Device trait here
-        todo!()
+    async fn cleanup(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Implement initialization logic for AqaraFP2 device
+        println!("Initializing AqaraFP2 device: {}", self.name);
+        // Add actual initialization code here
+        Ok(())
     }
 }
+
+impl Device for AqaraFP2 {
+
+}
+
 
 const SERVICE_NAME: &'static str = "_hap._tcp.local";
 
@@ -114,7 +132,7 @@ fn get_txt(record: &Record) -> Option<&Vec<String>> {
     }
 }
 
-impl hal::Driver<AqaraFP2Discovery, AqaraFP2Device> for AqaraFP2Driver {
+impl hal::Driver<AqaraFP2Discovery, AqaraFP2> for AqaraFP2Driver {
     async fn discover(&self) -> Vec<AqaraFP2Discovery> {
         let stream_result = mdns::discover::all(SERVICE_NAME, Duration::from_secs(5));
         let mut discoveries = Vec::new();
@@ -157,7 +175,7 @@ impl hal::Driver<AqaraFP2Discovery, AqaraFP2Device> for AqaraFP2Driver {
         discoveries
     }
 
-    async fn create(_info: AqaraFP2Discovery) -> AqaraFP2Device {
+    async fn create(_info: AqaraFP2Discovery) -> AqaraFP2 {
         todo!()
     }
 }

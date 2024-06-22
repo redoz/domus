@@ -1,9 +1,8 @@
-pub trait Space {
-    fn name(&self) -> &str;
-    // fn tags(&self) -> &[String];
-    //fn sub_spaces(&self) -> SubSpaceIterator<'_, &Self>;
-//    fn devices(&self) -> &[Box<dyn Device>];   // Assuming a Device trait for all devices
-}
+#[macro_use]
+mod domus_macro;
+
+
+
 
 
 /*
@@ -14,114 +13,27 @@ pub struct SubSpaceIterator<'a, S> {
 }
  */
 
-use driver::AqaraFP2Driver;
+use driver::AqaraFP2;
 use paste::paste;
 
-/*
-
-// devices
-            $(, $device_field:ident: $device_driver:ty 
-                { 
-                    $($device_prop:ident: $device_value:expr),*
-                }
-            )*
-            // sub-spaces
-            $(, $subfield:ident: $subspace:tt)*
-
-*/
-macro_rules! define_space_field {
-    (
-        $field:ident,
-        $device_driver:ty 
-        { 
-            $($device_prop:ident: $device_value:expr),*
-        }
-    ) => {
-        $device_driver
-    };
-
-    (
-        $field:ident,
-        $subspace:tt
-    ) => {
-        paste! {
-            [<$subfield:camel>]
-        }
-    }
-}
 
 
-macro_rules! define_space {
-    ($name:ident, { $($inner:tt)* }) => {
-        paste! {
-            #[derive(Debug)]
-            struct [<$name:camel>] {
-                name: String,
-            }
 
-            impl Space for [<$name:camel>] {
-                fn name(&self) -> &str {
-                    &self.name
-                }
-            }
-        }
-    };
-    ($name:ident, $type:ident { $($props:tt)* }) => {
-        // Device definition, if needed
-    };
-}
-
-macro_rules! domus {
-    (
-        name: $name:expr
-        $(, $field:ident: { $($subspace:tt)* })*
-        $(, $device:ident: $device_type:ident { $($device_props:tt)* })*
-        $(,)?
-    ) => {
-        paste! {
-            {
-                #[derive(Debug)]
-                struct Domus {
-                    name: String,
-                    $($field: [<$field:camel>],)*
-                    $($device: $device_type,)*
-                }
-
-                impl Space for Domus {
-                    fn name(&self) -> &str {
-                        &self.name
-                    }
-                }
-
-                $(
-                    define_space!($field, { $($subspace)* });
-                )*
-
-                Domus {
-                    name: $name.to_string(),
-                    $($field: [<$field:camel>] { name: stringify!($field).to_string() },)*
-                    $($device: $device_type { $($device_props)* },)*
-                }
-            }
-        }
-    };
-}
-
-enum Tags {
-    Foo,
-    Bar
-}
-
-fn main() {
+#[async_std::main]
+async fn main() {
     let apartment = domus! {
         name: "Apartment",
-        entrance_hallway: {
-            name: "Entrance Hallway"
+        office: Space {
+            name: "Office",
+            motion_sensor: AqaraFP2 { 
+                name: "Motion sensor"
+            },
         },
-        sensoor: MySensor {
-            name: "yahoo"
-        }
     };
+
+    
+    apartment.init().await;
+    
 /*
     let apartment = domus! {
         name: "Apartment",

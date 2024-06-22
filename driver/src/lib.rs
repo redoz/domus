@@ -1,6 +1,6 @@
 pub mod aqara_fp2;
 
-pub use aqara_fp2::{AqaraFP2Discovery, AqaraFP2Device, AqaraFP2Driver};
+pub use aqara_fp2::{AqaraFP2Discovery, AqaraFP2, AqaraFP2Driver};
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

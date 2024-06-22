@@ -7,5 +7,6 @@ edition = "2024"
 
 [dependencies]
 hal = { path = "../hal" }
+core = { path = "../core" }
 futures-util = "0.3.30"
 mdns = "3.0.0"
