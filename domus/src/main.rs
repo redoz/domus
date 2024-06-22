@@ -1,5 +1,6 @@
 #[macro_use]
 mod domus_macro;
+use driver::DummyDevice;
 use paste::paste;
 
 use core::LifeCycle;
@@ -28,6 +29,15 @@ async fn main() {
 
     let apartment = domus! {
         name: "Apartment",
+        
+        entrance: Space {
+            name: "Entryway",
+            door_sensor: DummyDevice { 
+                device_type: "Aqara P2 Door Sensor",
+                name: "Apartment door"
+            },
+        },
+        
         office: Space {
             name: "Office",
             motion_sensor: AqaraFP2 { 
