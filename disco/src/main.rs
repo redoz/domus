@@ -1,9 +1,13 @@
 use clap::{Arg, Command};
 use driver::AqaraFP2Driver; // Import the trait
-use hal::{Driver, DiscoveryInfo};
+use hal::DeviceDiscovery;
+
+
 
 #[async_std::main]
 async fn main() {
+
+
     let matches = Command::new("disco")
         .version("1.0")
         .author("Patrik Husfloen <redoz@redoz.com>")
@@ -16,7 +20,9 @@ async fn main() {
                         .short('d')
                         .long("driver")
                         .value_name("NAME")
-                        .help("Driver to use for discovery"),
+                        .help("Driver to use for discovery")
+                        .value_parser(["aqarafp2"])
+                        .required(true),
                 )
                 .arg(Arg::new("debug").long("debug").help("Turn on debugging")),
         )
@@ -25,21 +31,18 @@ async fn main() {
     if let Some(subcommand) = matches.subcommand() {
         match subcommand {
             ("scan", sub_m) => {
-                if let Some(driver) = sub_m.get_one::<String>("driver") {
-                    println!("Value for driver: {}", driver);
-                }
-                /* 
-                if matches.contains_id("debug") {
-                    println!("Debugging is on");
-                }
-                */
 
-                let fp2 = AqaraFP2Driver::new();
-                println!("AB");
-                let result = fp2.discover().await;
-                println!("CD");
-                for item in result {
-                    println!("Discovered item: {:?}", item.get_name());
+                let driver = sub_m.get_one::<String>("driver").unwrap();
+
+                match driver.as_str() {
+                    "aqarafp2" => {
+                        let discoveries = AqaraFP2Driver::discover().await;
+                        for discovery in discoveries {
+                            println!("Discovered Aqara FP2 device: {}", discovery.name);
+                            println!("Definition: {}", discovery.definition);
+                        }
+                    },
+                    _ => panic!("Unknown driver: {}", driver)
                 }
             }
             ("drivers", _) => {

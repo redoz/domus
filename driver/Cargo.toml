@@ -9,5 +9,6 @@ edition = "2024"
 hal = { path = "../hal" }
 core = { path = "../core" }
 futures-util = "0.3.30"
-mdns = "3.0.0"
+mdns-sd = "0.11.1"
 log = "0.4.21"
+inventory = "0.3.15"

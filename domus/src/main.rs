@@ -31,11 +31,25 @@ async fn main() {
         
         office: Space {
             name: "Office",
-            motion_sensor: AqaraFP2 {                 
+            motion_sensor: AqaraFP2 {
                 name: "Offic motion sensor"
             }
         }
     };
+
+    if let Err(error) = apartment.init().await {
+        log::error!("Error initializing: {:?}", error);
+    } else {
+        // start up the state-machines
+    }
+
+    log::info!("Shutting down...");
+    if let Err(error) = apartment.dispose().await {
+        log::error!("Error disposing: {:?}", error);
+        std::process::exit(1);
+    }
+
+
 /*
     let apartment = domus! {
         name: "Apartment",
@@ -166,10 +180,7 @@ async fn main() {
     };
  */
     
-    if let Err(error) = apartment.init().await {
-        log::error!("Error initializing: {:?}", error);
-        std::process::exit(1);
-    }
+
  
  /*
     // You can still reference devices like this:

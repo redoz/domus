@@ -1,10 +1,10 @@
 use std::{net::IpAddr, time::Duration};
-use hal::{DiscoveryInfo};
-use mdns::{Record, RecordKind};
+use hal::DeviceDiscovery;
+use mdns_sd::{ServiceDaemon, ServiceEvent};
 use core::LifeCycle;
 use core::Device;
+use hal::DiscoveryInfo;
 
-use futures_util::{pin_mut, stream::StreamExt};
 /* 
 enum Category {
 	Other = 1,
@@ -71,16 +71,7 @@ pub struct AqaraFP2Discovery {
     ip: IpAddr,
 }
 
-impl DiscoveryInfo for AqaraFP2Discovery {
-    fn get_name(&self) -> &str {
-        &self.name
-    }
-    
-    fn get_id(&self) -> &str {
-        &self.id
-    }
-    // Implement the required methods here
-}
+
 
 pub struct AqaraFP2Driver {}
 
@@ -115,73 +106,38 @@ impl Device for AqaraFP2 {
 
 }
 
+const SERVICE_NAME: &'static str = "_hap._tcp.local.";
 
-const SERVICE_NAME: &'static str = "_hap._tcp.local";
-
-fn to_ip_addr(record: &Record) -> Option<IpAddr> {
-    match record.kind {
-        RecordKind::A(addr) => Some(addr.into()),
-        RecordKind::AAAA(addr) => Some(addr.into()),
-        _ => None,
-    }
-}
-
-fn get_txt(record: &Record) -> Option<&Vec<String>> {
-    match &record.kind {
-        RecordKind::TXT(txt) => Some(txt),
-        _ => None
-    }
-}
-
-impl hal::Driver<AqaraFP2Discovery, AqaraFP2> for AqaraFP2Driver {
-    async fn discover(&self) -> Vec<AqaraFP2Discovery> {
-        let stream_result = mdns::discover::all(SERVICE_NAME, Duration::from_secs(5));
+impl DeviceDiscovery for AqaraFP2Driver {
+    async fn discover() -> Vec<DiscoveryInfo> {
+        let mdns = ServiceDaemon::new().expect("Failed to create daemon");
+        let receiver = mdns.browse(SERVICE_NAME).expect("Failed to browse");
         let mut discoveries = Vec::new();
-        println!("EF");
-        match stream_result {
-            Ok(stream) => {
-                let stream = stream.listen();
-                println!("QA");
-                pin_mut!(stream);
-                while let Some(Ok(response)) = stream.next().await {
-                    println!("YERRP");
-                    let txt = response.records().filter_map(self::get_txt).next();
-                    if let Some(txt) = txt {
-                        if txt.iter().any(|t| t == "md=PS-S02D") {
-                            println!("Found FP2");
-                        }
-                    } 
-                    let addr = response.records().filter_map(self::to_ip_addr).next();
 
-                    if let Some(addr) = addr {
-                        if let Some(txt) = txt {
-                            println!("found cast device at {}, txt: {:?}", addr, txt);
-                            discoveries.push(AqaraFP2Discovery { 
-                                name: addr.to_string() ,
-                                ip: addr,
-                                id: "abc".to_string()
-                            });
+        while let Ok(event) = receiver.recv_timeout(Duration::from_secs(5)) {
+            match event {
+                ServiceEvent::ServiceResolved(info) => {
+                    println!("YERRP");
+                    if let Some(txt) = info.get_property("md") {
+                        if txt.val_str() == "PS-S02D" {
+                            println!("Found FP2");
+                            if let Some(addr) = info.get_addresses().iter().next() {
+                                println!("found cast device at {}, txt: {:?}", addr, info.get_properties());
+                                discoveries.push(DiscoveryInfo { 
+                                    name: info.get_hostname().to_string(),
+                                    definition: "".to_string()
+                                    //ip: addr.to_owned(),
+                                    //id: info.get_fullname().to_string(),
+                                });
+                            }
                         }
-                    } else {
-                        println!("cast device does not advertise address");
                     }
                 }
-            }
-            Err(_) => {
-                // Handle the error appropriately
-                println!("Failed to start mDNS discovery");
+                _ => {}
             }
         }
-
         discoveries
     }
 
-    async fn create(_info: AqaraFP2Discovery) -> AqaraFP2 {
-        todo!()
-    }
-
-    async fn pair(&self, _info: &AqaraFP2Discovery) -> Result<(), Box<dyn std::error::Error>> {
-        // Implement pairing logic here
-        Ok(())
-    }
 }
+

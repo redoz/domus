@@ -2,7 +2,6 @@ pub mod aqara_fp2;
 
 pub use aqara_fp2::{AqaraFP2Discovery, AqaraFP2, AqaraFP2Driver};
 
-
 use core::{Device, LifeCycle};
 
 
