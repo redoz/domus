@@ -57,11 +57,20 @@ async fn main() {
 
                 match driver.as_str() {
                     "aqarafp2" => {
+                        println!("Scanning for Aqara FP2 devices");
                         let driver = AqaraFP2Driver::new();
                         let discoveries = driver.discover().await;
+                        
+                        if discoveries.len() == 0 {
+                            println!("No devices found");
+                            exit(0);
+                        }
+
                         for discovery in discoveries {
                             println!("Discovered Aqara FP2 device: {} (id: {})", discovery.name(), discovery.id());
                         }
+
+                        
                     },
                     _ => panic!("Unknown driver: {}", driver)
                 }
@@ -72,6 +81,7 @@ async fn main() {
 
                 match driver.as_str() {
                     "aqarafp2" => {
+                        println!("Pairing Aqara FP2 device with id {}", device_id);
                         let driver = AqaraFP2Driver::new();
                         let discoveries = driver.discover().await;
                         let discovery = discoveries.iter().filter(|d| d.id() == device_id).next();
@@ -79,7 +89,7 @@ async fn main() {
                             println!("Could not find Aqara FP2 device with id: {}", device_id);
                             exit(1);
                         }
-
+                        println!("Device found, attempting to pair...");
                         let _pairing = driver.pair(discovery.unwrap()).await;
                     },
                     _ => panic!("Unknown driver: {}", driver)

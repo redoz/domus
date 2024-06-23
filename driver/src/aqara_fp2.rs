@@ -1,6 +1,7 @@
 use core::{DiscoveryInfo, DeviceProperties, Device, Driver, LifeCycle};
 use std::{net::IpAddr, time::Duration};
 use mdns_sd::{ServiceDaemon, ServiceEvent};
+use sha2::{digest::Digest, Sha256, Sha512};
 
 /* 
 enum Category {
@@ -152,7 +153,6 @@ impl Driver<AqaraFP2Discovery, AqaraFP2, AqaraFP2> for AqaraFP2Driver {
         while let Ok(event) = receiver.recv_timeout(Duration::from_secs(5)) {
             match event {
                 ServiceEvent::ServiceResolved(info) => {
-                    println!("YERRP");
                     if let Some(txt) = info.get_property("md") {
                         if txt.val_str() == "PS-S02D" {
                             if let Some(addr) = info.get_addresses().iter().next() {
@@ -173,6 +173,9 @@ impl Driver<AqaraFP2Discovery, AqaraFP2, AqaraFP2> for AqaraFP2Driver {
     }
     
     async fn pair(&self, _discovery: &AqaraFP2Discovery) -> Result<AqaraFP2, Box<dyn std::error::Error>> {
+        
+        let srp_client = srp::client::SrpClient::<Sha512>::new(&srp::groups::G_3072);
+        
         todo!()
     }
 }
