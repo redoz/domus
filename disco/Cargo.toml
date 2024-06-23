@@ -9,4 +9,5 @@ edition = "2024"
 clap = "4.5.7"
 driver = { path = "../driver" }
 hal = { path = "../hal" }
+core = { path = "../core" }
 async-std = { version = "1.12.0", features = ["attributes"] }

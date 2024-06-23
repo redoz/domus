@@ -1,9 +1,6 @@
+use core::{DiscoveryInfo, DeviceProperties, Device, Driver, LifeCycle};
 use std::{net::IpAddr, time::Duration};
-use hal::DeviceDiscovery;
 use mdns_sd::{ServiceDaemon, ServiceEvent};
-use core::LifeCycle;
-use core::Device;
-use hal::DiscoveryInfo;
 
 /* 
 enum Category {
@@ -65,26 +62,53 @@ format!("sf={}", self.status_flag as u8),
 format!("ci={}", self.category as u8),
 */
 
+/*
+discovery() -> impl DeviceDiscovery
+pair(DeviceDiscovery) -> impl DeviceProperties
+attach(DeviceProperties) -> impl Device
+*/
+
 pub struct AqaraFP2Discovery {
     id: String,
     name: String,
     ip: IpAddr,
 }
 
+impl DiscoveryInfo for AqaraFP2Discovery {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn id(&self) -> &str {
+        &self.id
+    }
+}
 
 
-pub struct AqaraFP2Driver {}
+// device properties
 
 #[derive(Debug)]
 pub struct AqaraFP2 {
-    pub name: &'static str
+    pub name: &'static str,
+    pub ip: &'static str
 }
 
-impl AqaraFP2Driver {
-    pub fn new() -> Self {
-        AqaraFP2Driver {}
+impl DeviceProperties for AqaraFP2 {
+}
+
+impl std::fmt::Display for AqaraFP2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, r#"
+AqaraFP2 {{ 
+    name: \"{}\",
+    ip: \"{}\",
+}}
+"#, 
+self.name, 
+self.ip)
     }
 }
+
 
 impl LifeCycle for AqaraFP2 {
     async fn init(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -102,14 +126,25 @@ impl LifeCycle for AqaraFP2 {
     }
 }
 
+
+
 impl Device for AqaraFP2 {
 
 }
 
+
+pub struct AqaraFP2Driver {}
+
+impl AqaraFP2Driver {
+    pub fn new() -> Self {
+        AqaraFP2Driver {}
+    }
+}
+
 const SERVICE_NAME: &'static str = "_hap._tcp.local.";
 
-impl DeviceDiscovery for AqaraFP2Driver {
-    async fn discover() -> Vec<DiscoveryInfo> {
+impl Driver<AqaraFP2Discovery, AqaraFP2, AqaraFP2> for AqaraFP2Driver {
+    async fn discover(&self) -> Vec<AqaraFP2Discovery> {
         let mdns = ServiceDaemon::new().expect("Failed to create daemon");
         let receiver = mdns.browse(SERVICE_NAME).expect("Failed to browse");
         let mut discoveries = Vec::new();
@@ -120,14 +155,12 @@ impl DeviceDiscovery for AqaraFP2Driver {
                     println!("YERRP");
                     if let Some(txt) = info.get_property("md") {
                         if txt.val_str() == "PS-S02D" {
-                            println!("Found FP2");
                             if let Some(addr) = info.get_addresses().iter().next() {
-                                println!("found cast device at {}, txt: {:?}", addr, info.get_properties());
-                                discoveries.push(DiscoveryInfo { 
-                                    name: info.get_hostname().to_string(),
-                                    definition: "".to_string()
-                                    //ip: addr.to_owned(),
-                                    //id: info.get_fullname().to_string(),
+                                log::debug!("found cast device at {}, properties: {:?}", addr, info.get_properties());
+                                discoveries.push(AqaraFP2Discovery { 
+                                    name: info.get_property_val_str("md").unwrap().to_string(),
+                                    ip: addr.to_owned(),
+                                    id: info.get_property_val_str("id").unwrap().to_string(),
                                 });
                             }
                         }
@@ -138,6 +171,10 @@ impl DeviceDiscovery for AqaraFP2Driver {
         }
         discoveries
     }
-
+    
+    async fn pair(&self, _discovery: &AqaraFP2Discovery) -> Result<AqaraFP2, Box<dyn std::error::Error>> {
+        todo!()
+    }
 }
+
 

@@ -1,6 +1,7 @@
 use clap::{Arg, Command};
-use driver::AqaraFP2Driver; // Import the trait
-use hal::DeviceDiscovery;
+use core::{Driver, DiscoveryInfo};
+use driver::AqaraFP2Driver; // Import both the struct and the trait
+use std::process::exit; // Added this line to import the exit function
 
 
 
@@ -26,25 +27,64 @@ async fn main() {
                 )
                 .arg(Arg::new("debug").long("debug").help("Turn on debugging")),
         )
+        .subcommand(
+            Command::new("pair")
+                .arg(
+                    Arg::new("driver")
+                        .short('d')
+                        .long("driver")
+                        .value_name("NAME")
+                        .help("Driver to use")
+                        .value_parser(["aqarafp2"])
+                        .required(true),
+                )
+                .arg(
+                    Arg::new("id")
+                        .long("id")
+                        .value_name("NAME")
+                        .help("Device identifier")
+                        .required(true),
+                )                
+                .arg(Arg::new("debug").long("debug").help("Turn on debugging")),
+        )        
         .get_matches();
 
     if let Some(subcommand) = matches.subcommand() {
         match subcommand {
-            ("scan", sub_m) => {
+            ("scan", cmd) => {
 
-                let driver = sub_m.get_one::<String>("driver").unwrap();
+                let driver = cmd.get_one::<String>("driver").unwrap();
 
                 match driver.as_str() {
                     "aqarafp2" => {
-                        let discoveries = AqaraFP2Driver::discover().await;
+                        let driver = AqaraFP2Driver::new();
+                        let discoveries = driver.discover().await;
                         for discovery in discoveries {
-                            println!("Discovered Aqara FP2 device: {}", discovery.name);
-                            println!("Definition: {}", discovery.definition);
+                            println!("Discovered Aqara FP2 device: {} (id: {})", discovery.name(), discovery.id());
                         }
                     },
                     _ => panic!("Unknown driver: {}", driver)
                 }
-            }
+            },
+            ("pair", cmd) => {
+                let driver = cmd.get_one::<String>("driver").unwrap();
+                let device_id = cmd.get_one::<String>("id").unwrap();
+
+                match driver.as_str() {
+                    "aqarafp2" => {
+                        let driver = AqaraFP2Driver::new();
+                        let discoveries = driver.discover().await;
+                        let discovery = discoveries.iter().filter(|d| d.id() == device_id).next();
+                        if let None = discovery {
+                            println!("Could not find Aqara FP2 device with id: {}", device_id);
+                            exit(1);
+                        }
+
+                        let _pairing = driver.pair(discovery.unwrap()).await;
+                    },
+                    _ => panic!("Unknown driver: {}", driver)
+                }
+            },
             ("drivers", _) => {
                 println!("Listing all available drivers");
             }

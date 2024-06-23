@@ -19,7 +19,10 @@ pub struct SubSpaceIterator<'a, S> {
 use driver::AqaraFP2;
 
 
-
+// TODO
+// presence
+// spaces should have presence, it should be a probability
+// probably the propagation upwards should just be max()
 
 
 #[async_std::main]
@@ -32,7 +35,8 @@ async fn main() {
         office: Space {
             name: "Office",
             motion_sensor: AqaraFP2 {
-                name: "Offic motion sensor"
+                name: "Offic motion sensor",
+                ip: "192.168.22.51"
             }
         }
     };
