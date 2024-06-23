@@ -1,7 +1,7 @@
 use core::{DiscoveryInfo, DeviceProperties, Device, Driver, LifeCycle};
-use std::{net::IpAddr, time::Duration};
-use mdns_sd::{ServiceDaemon, ServiceEvent};
-use sha2::{digest::Digest, Sha256, Sha512};
+use std::time::Duration;
+use crate::hap::{HAPDiscovery, HAPAccessory};
+
 
 /* 
 enum Category {
@@ -70,18 +70,16 @@ attach(DeviceProperties) -> impl Device
 */
 
 pub struct AqaraFP2Discovery {
-    id: String,
-    name: String,
-    ip: IpAddr,
+    hap_accessory: HAPAccessory,
 }
 
 impl DiscoveryInfo for AqaraFP2Discovery {
     fn name(&self) -> &str {
-        &self.name
+        &self.hap_accessory.name
     }
 
     fn id(&self) -> &str {
-        &self.id
+        &self.hap_accessory.id
     }
 }
 
@@ -142,42 +140,28 @@ impl AqaraFP2Driver {
     }
 }
 
-const SERVICE_NAME: &'static str = "_hap._tcp.local.";
 
 impl Driver<AqaraFP2Discovery, AqaraFP2, AqaraFP2> for AqaraFP2Driver {
     async fn discover(&self) -> Vec<AqaraFP2Discovery> {
-        let mdns = ServiceDaemon::new().expect("Failed to create daemon");
-        let receiver = mdns.browse(SERVICE_NAME).expect("Failed to browse");
-        let mut discoveries = Vec::new();
+        let hap_discovery = HAPDiscovery::new().expect("Failed to create HAP discovery");
+        let accessories = hap_discovery.start_discovery(Duration::from_secs(5)).expect("Failed to start discovery");
 
-        while let Ok(event) = receiver.recv_timeout(Duration::from_secs(5)) {
-            match event {
-                ServiceEvent::ServiceResolved(info) => {
-                    if let Some(txt) = info.get_property("md") {
-                        if txt.val_str() == "PS-S02D" {
-                            if let Some(addr) = info.get_addresses().iter().next() {
-                                log::debug!("found cast device at {}, properties: {:?}", addr, info.get_properties());
-                                discoveries.push(AqaraFP2Discovery { 
-                                    name: info.get_property_val_str("md").unwrap().to_string(),
-                                    ip: addr.to_owned(),
-                                    id: info.get_property_val_str("id").unwrap().to_string(),
-                                });
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-        discoveries
+        accessories.into_iter()
+            .filter(|accessory| accessory.model == "PS-S02D") // Filter for Aqara FP2 model
+            .map(|accessory| AqaraFP2Discovery { hap_accessory: accessory })
+            .collect()
     }
     
-    async fn pair(&self, _discovery: &AqaraFP2Discovery) -> Result<AqaraFP2, Box<dyn std::error::Error>> {
-        
-        let srp_client = srp::client::SrpClient::<Sha512>::new(&srp::groups::G_3072);
-        
-        todo!()
+    async fn pair(&self, discovery: &AqaraFP2Discovery) -> Result<AqaraFP2, Box<dyn std::error::Error>> {
+        // Implement pairing logic using the HAPAccessory information
+        // This will depend on the specific pairing process for Aqara FP2
+        todo!("Implement pairing logic")
     }
+
+    /*
+    async fn attach(&self, device: &AqaraFP2) -> Result<AqaraFP2, Box<dyn std::error::Error>> {
+        // Implement attachment logic
+        todo!("Implement attachment logic")
+    }
+     */
 }
-
-
