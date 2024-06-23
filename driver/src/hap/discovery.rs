@@ -2,6 +2,7 @@ use mdns_sd::{ServiceDaemon, ServiceEvent};
 use std::error::Error;
 use std::time::Duration;
 use std::collections::HashMap;
+use std::io;
 use enumflags2::{bitflags, BitFlags};
 use std::net::IpAddr;
 
@@ -11,7 +12,7 @@ fn parse_bitflags<T: enumflags2::BitFlag>(txt_value: Option<&str>) -> Result<Bit
 where
     T: enumflags2::BitFlag,
     T::Numeric: TryFrom<u32>,
-    <T::Numeric as TryFrom<u32>>::Error: std::error::Error + 'static,
+    <T::Numeric as TryFrom<u32>>::Error: Error + 'static,
 {
     let Some(value) = txt_value else {
         return Ok(BitFlags::empty());
@@ -23,20 +24,20 @@ where
     
     let flags = BitFlags::from_bits(numeric);
 
-    flags.map_err(|_| Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, "Failed to parse bit flags")) as Box<dyn Error>)
+    flags.map_err(|_| Box::new(io::Error::new(io::ErrorKind::InvalidData, "Failed to parse bit flags")) as Box<dyn Error>)
 }
 
-pub struct HAPDiscovery {
+pub struct HapDiscovery {
     mdns: ServiceDaemon,
 }
 
-impl HAPDiscovery {
+impl HapDiscovery {
     pub fn new() -> Result<Self, Box<dyn Error>> {
         let mdns = ServiceDaemon::new()?;
-        Ok(HAPDiscovery { mdns })
+        Ok(HapDiscovery { mdns })
     }
 
-    pub fn start_discovery(&self, timeout: Duration) -> Result<Vec<HAPAccessory>, Box<dyn Error>> {
+    pub fn start_discovery(&self, timeout: Duration) -> Result<Vec<HapAccessory>, Box<dyn Error>> {
         let receiver = self.mdns.browse(HAP_SERVICE_TYPE)?;
         let mut accessories = HashMap::new();
 
@@ -45,12 +46,12 @@ impl HAPDiscovery {
             if let Ok(event) = receiver.recv_timeout(Duration::from_millis(100)) {
                 if let ServiceEvent::ServiceResolved(info) = event {
                     println!("Found device: {:?}", info);
-                    match HAPAccessory::from_service_info(&info) {
+                    match HapAccessory::from_service_info(&info) {
                         Ok(accessory) => {
                             accessories.insert(accessory.id.clone(), accessory);
                         },
                         Err(error) => {
-                            println!("Failed to parse HAPAccessory: {:?}. Error: {:?}", info, error);
+                            println!("Failed to parse HapAccessory: {:?}. Error: {:?}", info, error);
                         }
                     }
                 }
@@ -65,7 +66,7 @@ impl HAPDiscovery {
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(u32)]
 pub enum FeatureFlag {
-    HAPPairing = 0x01,
+    HapPairing = 0x01,
     HomeKitSecureVideo = 0x02,
     HomeKitAudio = 0x04,
     HomeKitBridge = 0x08,
@@ -89,8 +90,7 @@ pub enum StatusFlag {
 }
 
 #[derive(Debug, Clone)]
-pub struct HAPAccessory {
-    pub name: String,
+pub struct HapAccessory {
     pub address: IpAddr,
     pub port: u16,
     pub id: String,
@@ -103,10 +103,9 @@ pub struct HAPAccessory {
     pub setup_hash: Option<String>,
 }
 
-impl HAPAccessory {
+impl HapAccessory {
     fn from_service_info(info: &mdns_sd::ServiceInfo) -> Result<Self, Box<dyn Error>> {
-        Ok(HAPAccessory {
-            name: info.get_fullname().to_string(),
+        Ok(HapAccessory {
             address: info.get_addresses().iter().next().ok_or("No IP address found")?.clone(),
             port: info.get_port(),
             id: info.get_property_val_str("id").ok_or("Missing id")?.to_string(),
@@ -141,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_hap_discovery() {
-        let discovery = HAPDiscovery::new().unwrap();
+        let discovery = HapDiscovery::new().unwrap();
         let accessories = discovery.start_discovery(Duration::from_secs(5)).unwrap();
         
         for accessory in accessories {
@@ -149,7 +148,7 @@ mod tests {
             println!("Is paired: {}", accessory.is_paired());
             println!("Is configured for WiFi: {}", accessory.is_configured_for_wifi());
             println!("Has problem detected: {}", accessory.has_problem_detected());
-            println!("Supports HAP Pair Setup: {}", accessory.feature_flags.contains(FeatureFlag::HAPPairing));
+            println!("Supports HAP Pair Setup: {}", accessory.feature_flags.contains(FeatureFlag::HapPairing));
             println!("Supports Apple Authentication Coprocessor: {}", 
                      accessory.pairing_feature_flags.contains(PairingFeatureFlag::AppleAuthenticationCoprocessor));
         }
