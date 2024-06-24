@@ -1,29 +1,24 @@
 use std::error::Error;
 use crate::hap::discovery::HapAccessory;
-use crate::hap::pairing::PairingSession;
+use crate::hap::pairing::PairSetup;
 
 pub struct HapClient {
-    pairing_session: Option<PairingSession>,
 }
 
 impl HapClient {
     pub fn new() -> Self {
         HapClient {
-            pairing_session: None,
         }
     }
 
-    pub fn pair(&mut self, accessory: &HapAccessory, setup_code: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn pair(&mut self, accessory: &HapAccessory, setup_code: &str) -> Result<(), Box<dyn Error>> {
         println!("Initiating pairing with accessory: {:?}", accessory);
 
-        self.pairing_session = Some(PairingSession::new(accessory.clone(), setup_code));
-        let pairing_session = self.pairing_session.as_mut().unwrap();
+        let pair_setup = PairSetup::new();
 
-        // Start the pairing process
-        let start_request = pairing_session.start_pairing()?;
-        // TODO: Send the start_request and handle the response
+        let result = pair_setup.pair(accessory, setup_code).await?;
 
-        // Implement the rest of the pairing process using pairing_session methods
+
 
         println!("Pairing completed successfully");
         Ok(())

@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TlvType {
@@ -79,43 +80,71 @@ impl Tlv8Writer {
     }
 }
 
-pub struct Tlv8Reader {
-    //data: BTreeMap<TlvType, Vec<u8>>,
+impl fmt::Debug for Tlv8Writer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Tlv8Writer {{")?;
+        let mut offset = 0;
+        while offset < self.buffer.len() {
+            if offset + 2 > self.buffer.len() {
+                writeln!(f, "    Invalid TLV data")?;
+                break;
+            }
+            let tag = self.buffer[offset];
+            let length = self.buffer[offset + 1] as usize;
+            offset += 2;
+            
+            if offset + length > self.buffer.len() {
+                writeln!(f, "    Invalid TLV length")?;
+                break;
+            }
+            
+            let value = &self.buffer[offset..offset + length];
+            offset += length;
+
+            let tlv_type = TlvType::try_from(tag).unwrap_or(TlvType::Separator);
+            write!(f, "    {:?} (0x{:02X}): ", tlv_type, tag)?;
+            
+            if length <= 16 {
+                // For short values, print as hex
+                for byte in value {
+                    write!(f, "{:02X} ", byte)?;
+                }
+            } else {
+                // For longer values, print length and first few bytes
+                write!(f, "[{} bytes] {:02X} {:02X} {:02X} ...", length, value[0], value[1], value[2])?;
+            }
+            writeln!(f)?;
+        }
+        write!(f, "}}")
+    }
 }
 
-/* 
-impl Tlv8Reader {
-    pub fn new(input: &[u8]) -> Result<Self, String> {
-        Ok(Tlv8Reader {
-            data: Self::decode(input)?,
-        })
+pub struct Tlv8Reader<'a> {
+    input: &'a [u8],
+}
+
+impl<'a> Tlv8Reader<'a> {
+    pub fn new(input: &'a [u8]) -> Self {
+        Tlv8Reader { input }
     }
 
-    fn decode(data: &[u8]) -> Result<BTreeMap<TlvType, Vec<u8>>, String> {
-        let mut decoded = BTreeMap::new();
+    pub fn read(&self) -> Result<Vec<(TlvType, Vec<u8>)>, String> {
+        let mut decoded = Vec::new();
         let mut i = 0;
-        while i < data.len() {
-            if i + 2 > data.len() {
+        while i < self.input.len() {
+            if i + 2 > self.input.len() {
                 return Err("Incomplete TLV".to_string());
             }
-            let tag = match TlvType::try_from(data[i]) {
-                Ok(t) => t,
-                Err(_) => return Err(format!("Invalid TLV type: {}", data[i])),
-            };
-            let length = data[i + 1] as usize;
+            let tag = TlvType::try_from(self.input[i])
+                .map_err(|_| format!("Invalid TLV type: {}", self.input[i]))?;
+            let length = self.input[i + 1] as usize;
             i += 2;
-            if i + length > data.len() {
+            if i + length > self.input.len() {
                 return Err("Invalid length in TLV".to_string());
             }
-            let value = data[i..i + length].to_vec();
+            decoded.push((tag, self.input[i..i + length].to_vec()));
             i += length;
-            decoded.entry(tag).or_insert_with(Vec::new).extend_from_slice(&value);
         }
         Ok(decoded)
     }
-
-    pub fn get(&self, tag: TlvType) -> Option<&Vec<u8>> {
-        self.data.get(&tag)
-    }
 }
-*/

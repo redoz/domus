@@ -1,6 +1,7 @@
 use core::{DiscoveryInfo, DeviceProperties, Device, Driver, LifeCycle};
 use std::time::Duration;
 use crate::hap::{HapAccessory, HapClient, HapDiscovery};
+use log::{info, error};
 
 
 /* 
@@ -153,13 +154,24 @@ impl Driver<AqaraFP2Discovery, AqaraFP2, AqaraFP2> for AqaraFP2Driver {
     }
     
     async fn pair(&self, discovery: &AqaraFP2Discovery) -> Result<AqaraFP2, Box<dyn std::error::Error>> {
-        // Implement pairing logic using the HapAccessory information
-        // This will depend on the specific pairing process for Aqara FP2
+
+
+        info!("Starting pairing process for Aqara FP2 device: {}", discovery.name());
         let mut client = HapClient::new();
 
-        client.pair(&discovery.hap_accessory, "24637337");
-
-        todo!("Implement pairing logic")
+        match client.pair(&discovery.hap_accessory, "24637337").await {
+            Ok(_) => {
+                info!("Successfully paired with Aqara FP2 device: {}", discovery.name());
+                Ok(AqaraFP2 {
+                    name: "",
+                    ip: "",
+                })
+            },
+            Err(e) => {
+                error!("Failed to pair with Aqara FP2 device: {}. Error: {}", discovery.name(), e);
+                Err(e)
+            }
+        }
     }
 
     /*
