@@ -25,7 +25,7 @@ use driver::AqaraFP2;
 // probably the propagation upwards should just be max()
 
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     env_logger::init();
 

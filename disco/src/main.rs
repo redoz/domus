@@ -3,10 +3,9 @@ use core::{Driver, DiscoveryInfo};
 use driver::AqaraFP2Driver; // Import both the struct and the trait
 use std::process::exit; // Added this line to import the exit function
 
-
-
-#[async_std::main]
+#[tokio::main]
 async fn main() {
+    env_logger::init();
 
 
     let matches = Command::new("disco")

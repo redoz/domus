@@ -3,7 +3,6 @@ use std::time::Duration;
 use crate::hap::{HapAccessory, HapClient, HapDiscovery};
 use log::{info, error};
 
-
 /* 
 enum Category {
 	Other = 1,
@@ -145,7 +144,7 @@ impl AqaraFP2Driver {
 impl Driver<AqaraFP2Discovery, AqaraFP2, AqaraFP2> for AqaraFP2Driver {
     async fn discover(&self) -> Vec<AqaraFP2Discovery> {
         let hap_discovery = HapDiscovery::new().expect("Failed to create Hap discovery");
-        let accessories = hap_discovery.start_discovery(Duration::from_secs(5)).expect("Failed to start discovery");
+        let accessories = hap_discovery.start_discovery(true, Duration::from_secs(5)).expect("Failed to start discovery");
 
         accessories.into_iter()
             .filter(|accessory| accessory.model == "PS-S02D") // Filter for Aqara FP2 model
